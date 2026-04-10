@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>PacMe — Maze Editor</title>
+<title>PacMan — Maze Editor</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟡</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
@@ -65,7 +65,7 @@ canvas{display:block;image-rendering:crisp-edges;cursor:crosshair}
 <body>
 <div id="app">
   <div id="topbar">
-    <h1>🟡 PACME EDITOR</h1>
+    <h1>🟡 PACMAN EDITOR</h1>
     <input type="text" id="maze-name" placeholder="Maze name..." value="My Maze">
     <button class="tb-btn" onclick="saveMaze()">💾 Save</button>
     <button class="tb-btn" onclick="toggleSaved()">📂 My Mazes</button>
@@ -436,13 +436,13 @@ function mazeToArray(){
 function saveMaze(){
   const name=document.getElementById('maze-name').value.trim()||'Unnamed';
   const data={name,maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart,date:Date.now()};
-  let saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  let saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   // Update if exists
   const idx=saved.findIndex(s=>s.name===name);
   if(idx>=0)saved[idx]=data;else saved.unshift(data);
 
   try{
-    localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+    localStorage.setItem('pacman_mazes',JSON.stringify(saved));
     document.getElementById('status-text').textContent=`Saved: ${name}`;
     setTimeout(updateStatus,2000);
   }catch(e){
@@ -451,7 +451,7 @@ function saveMaze(){
       while(saved.length>1){
         saved.pop(); // Remove oldest
         try{
-          localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+          localStorage.setItem('pacman_mazes',JSON.stringify(saved));
           document.getElementById('status-text').textContent=`Saved: ${name} (removed old mazes to fit)`;
           setTimeout(updateStatus,2000);
           return;
@@ -489,7 +489,7 @@ function updateStorageInfo(){
   const used=getStorageUsage();
   const limit=5*1024*1024; // ~5MB typical localStorage limit
   const pct=Math.min(100,Math.round(used/limit*100));
-  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   const mazeBytes=saved.length?JSON.stringify(saved).length*2:0;
 
   const el=document.getElementById('storage-info');
@@ -514,12 +514,12 @@ function updateStorageInfo(){
 
 function clearAllMazes(){
   if(!confirm('Delete ALL saved mazes? This cannot be undone.'))return;
-  localStorage.removeItem('pacme_mazes');
+  localStorage.removeItem('pacman_mazes');
   loadSavedList();
 }
 
 function loadSavedList(){
-  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   const list=document.getElementById('saved-list');
   updateStorageInfo();
   if(!saved.length){list.innerHTML='<p style="color:#888;padding:12px;text-align:center">No saved mazes yet<br><small>Draw a maze and click 💾 Save</small></p>';return}
@@ -537,7 +537,7 @@ function loadSavedList(){
 }
 
 function loadMaze(i){
-  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   const s=saved[i];if(!s)return;
   undoStack=[];redoStack=[];
   document.getElementById('maze-name').value=s.name;
@@ -549,15 +549,15 @@ function loadMaze(i){
 }
 
 function deleteMaze(i){
-  let saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  let saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   const name=saved[i].name;
   saved.splice(i,1);
-  localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+  localStorage.setItem('pacman_mazes',JSON.stringify(saved));
   loadSavedList();
 }
 
 function exportMaze(i){
-  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const saved=JSON.parse(localStorage.getItem('pacman_mazes')||'[]');
   const s=i!==undefined?saved[i]:{name:document.getElementById('maze-name').value.trim()||'maze',maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart};
   const data=JSON.stringify(s);
   const blob=new Blob([data],{type:'application/json'});
@@ -625,8 +625,8 @@ function playTest(){
 
   // Save current maze to BOTH sessionStorage and localStorage for reliability
   const data=JSON.stringify({maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart});
-  sessionStorage.setItem('pacme_testmaze',data);
-  localStorage.setItem('pacme_testmaze_last',data);
+  sessionStorage.setItem('pacman_testmaze',data);
+  localStorage.setItem('pacman_testmaze_last',data);
   // Navigate to game
   window.location.href='index.html';
 }

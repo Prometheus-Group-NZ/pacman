@@ -1,4 +1,4 @@
-# 🟡 PacMe — Pac-Man Clone + Maze Editor
+# 🟡 PacMan — Pac-Man Clone + Maze Editor
 
 A fully browser-based Pac-Man clone with a built-in maze editor, designed for Cloudflare Pages hosting.
 
@@ -27,8 +27,8 @@ A fully browser-based Pac-Man clone with a built-in maze editor, designed for Cl
 ### Option 1: Drag & Drop (Easiest)
 1. Go to [Cloudflare Pages Dashboard](https://dash.cloudflare.com/?to=/:account/pages)
 2. Click **Create a project** → **Direct Upload**
-3. Upload the entire `PacMe` folder
-4. Your site is live at `https://pacme.pages.dev`
+3. Upload the entire `PacMan` folder
+4. Your site is live at `https://pacman.pages.dev`
 
 ### Option 2: Wrangler CLI
 ```bash
@@ -42,11 +42,11 @@ wrangler pages publish .
 3. Build settings:
    - Build command: *(leave empty)*
    - Build output directory: `.`
-   - Root directory: `PacMe` (if in subfolder)
+   - Root directory: `PacMan` (if in subfolder)
 
 ## Project Structure
 ```
-PacMe/
+PacMan/
 ├── index.html      # Main game
 ├── editor.html     # Maze editor
 ├── _headers        # Cloudflare Pages security headers
