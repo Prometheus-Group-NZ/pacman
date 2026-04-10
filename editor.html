@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>PacMe — Maze Editor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟡</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0b;font-family:'Segoe UI',system-ui,sans-serif;color:#f4f4f5}
+
+#app{display:flex;flex-direction:column;height:100%}
+
+/* Top bar */
+#topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#18181b;border-bottom:1px solid #3f3f46;flex-shrink:0;flex-wrap:wrap}
+#topbar h1{font-size:1rem;color:#ffcc00;letter-spacing:1px;margin-right:8px}
+.tb-btn{padding:6px 14px;border:1px solid #3f3f46;background:#27272a;color:#f4f4f5;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+.tb-btn:hover{background:#3f3f46;border-color:#555}
+.tb-btn.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
+.tb-btn.go{background:#22c55e;border-color:#22c55e;color:#000}
+.tb-btn.go:hover{background:#16a34a}
+.sep{width:1px;height:24px;background:#3f3f46;margin:0 4px}
+#maze-name{background:#0a0a0b;border:1px solid #3f3f46;color:#f4f4f5;padding:4px 8px;border-radius:4px;font-size:0.85rem;width:140px}
+#maze-name:focus{outline:none;border-color:#3b82f6}
+
+/* Editor area */
+#editor-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;min-height:0}
+canvas{display:block;image-rendering:crisp-edges;cursor:crosshair}
+
+/* Tool palette */
+#tools{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#18181b;border-top:1px solid #3f3f46;flex-shrink:0;justify-content:center;flex-wrap:wrap}
+.tool{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:2px solid transparent;border-radius:8px;cursor:pointer;transition:all 0.15s;min-width:56px}
+.tool:hover{background:#27272a}
+.tool.active{border-color:#3b82f6;background:rgba(59,130,246,0.15)}
+.tool .ico{font-size:1.3rem;line-height:1}
+.tool .lbl{font-size:0.65rem;color:#a1a1aa}
+
+/* Status bar */
+#status{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;background:#111;border-top:1px solid #222;font-size:0.75rem;color:#888;flex-shrink:0}
+
+/* Saved mazes panel */
+#saved-panel{position:fixed;right:-320px;top:0;bottom:0;width:300px;background:#18181b;border-left:1px solid #3f3f46;z-index:50;transition:right 0.3s;display:flex;flex-direction:column}
+#saved-panel.open{right:0}
+#saved-panel h2{padding:12px;border-bottom:1px solid #3f3f46;font-size:1rem;color:#0ff}
+#saved-list{flex:1;overflow-y:auto;padding:8px}
+.saved-item{background:#27272a;border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;transition:all 0.15s}
+.saved-item:hover{background:#3f3f46}
+.saved-item .name{font-weight:600;font-size:0.9rem}
+.saved-item .meta{color:#888;font-size:0.75rem;margin-top:2px}
+.saved-item .actions{display:flex;gap:4px;margin-top:6px}
+.saved-item .actions button{padding:3px 8px;border:1px solid #555;background:#333;color:#fff;border-radius:4px;font-size:0.75rem;cursor:pointer}
+.saved-item .actions button:hover{background:#555}
+.saved-item .actions button.del{border-color:#ef4444;color:#ef4444}
+
+/* Storage indicator */
+#storage-info{font-size:0.8rem}
+.storage-bar{width:100%;height:6px;background:#333;border-radius:3px;overflow:hidden;margin-top:6px}
+.storage-fill{height:100%;border-radius:3px;transition:width 0.3s,background 0.3s}
+.storage-text{display:flex;justify-content:space-between;align-items:center}
+.storage-warn{color:#ef4444;font-size:0.75rem;margin-top:4px}
+.storage-ok{color:#22c55e}
+#close-panel{position:absolute;top:8px;right:8px;background:none;border:none;color:#a1a1aa;font-size:1.2rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <h1>🟡 PACME EDITOR</h1>
+    <input type="text" id="maze-name" placeholder="Maze name..." value="My Maze">
+    <button class="tb-btn" onclick="saveMaze()">💾 Save</button>
+    <button class="tb-btn" onclick="toggleSaved()">📂 My Mazes</button>
+    <div class="sep"></div>
+    <button class="tb-btn" onclick="undo()" title="Ctrl+Z or two-finger tap">↩️ Undo</button>
+    <button class="tb-btn" onclick="redo()" title="Ctrl+Y or long press">↪️ Redo</button>
+    <div class="sep"></div>
+    <button class="tb-btn" onclick="clearMaze()">🗑️ Clear</button>
+    <button class="tb-btn" onclick="loadTemplate()">📋 Template</button>
+    <button class="tb-btn" onclick="randomMaze()">🎲 Random</button>
+    <div class="sep"></div>
+    <button class="tb-btn" onclick="exportMaze()">📤 Export</button>
+    <button class="tb-btn" onclick="importMaze()">📥 Import</button>
+    <div class="sep"></div>
+    <button class="tb-btn go" onclick="playTest()">▶ Test Play</button>
+  </div>
+
+  <div id="editor-wrap">
+    <canvas id="cv"></canvas>
+  </div>
+
+  <div id="tools">
+    <div class="tool active" data-tool="wall"><div class="ico">🧱</div><div class="lbl">Wall</div></div>
+    <div class="tool" data-tool="erase"><div class="ico">✏️</div><div class="lbl">Erase</div></div>
+    <div class="tool" data-tool="dot"><div class="ico">⚪</div><div class="lbl">Dot</div></div>
+    <div class="tool" data-tool="power"><div class="ico">🔵</div><div class="lbl">Power</div></div>
+    <div class="tool" data-tool="gate"><div class="ico">🚪</div><div class="lbl">Gate</div></div>
+    <div class="tool" data-tool="pacman"><div class="ico">🟡</div><div class="lbl">Pac-Man</div></div>
+    <div class="tool" data-tool="ghost"><div class="ico">👻</div><div class="lbl">Ghost</div></div>
+    <div class="sep" style="height:32px"></div>
+    <div class="tool" data-tool="fill"><div class="ico">🪣</div><div class="lbl">Fill</div></div>
+  </div>
+
+  <div id="status">
+    <span id="status-text">Click to draw walls</span>
+    <span id="dot-count"></span>
+  </div>
+</div>
+
+<!-- Saved Mazes Panel -->
+<div id="saved-panel">
+  <button id="close-panel" onclick="toggleSaved()">✕</button>
+  <h2>Saved Mazes</h2>
+  <div id="storage-info" style="padding:8px 12px;border-bottom:1px solid #3f3f46"></div>
+  <div id="saved-list"></div>
+</div>
+
+<script>
+const C=28,R=31;
+const W=0,D=1,E=2,P=3,G=4;
+let cv,cx,ts=14;
+let maze=[];
+let pacmanStart={x:14,y:23};
+let ghostStart={x:14,y:14};
+let currentTool='wall';
+let drawing=false;
+let lastTile=null;
+let undoStack=[];
+let redoStack=[];
+const MAX_UNDO=50;
+
+function pushUndo(){
+  undoStack.push({maze:maze.map(r=>[...r]),pacman:{...pacmanStart},ghost:{...ghostStart}});
+  if(undoStack.length>MAX_UNDO)undoStack.shift();
+  redoStack=[]; // clear redo on new action
+}
+
+function undo(){
+  if(!undoStack.length)return;
+  redoStack.push({maze:maze.map(r=>[...r]),pacman:{...pacmanStart},ghost:{...ghostStart}});
+  const prev=undoStack.pop();
+  maze=prev.maze;pacmanStart=prev.pacman;ghostStart=prev.ghost;
+  render();updateDotCount();
+  document.getElementById('status-text').textContent='Undo (Ctrl+Z / two-finger tap)';
+  if(navigator.vibrate)navigator.vibrate(30);
+}
+
+function redo(){
+  if(!redoStack.length)return;
+  undoStack.push({maze:maze.map(r=>[...r]),pacman:{...pacmanStart},ghost:{...ghostStart}});
+  const next=redoStack.pop();
+  maze=next.maze;pacmanStart=next.pacman;ghostStart=next.ghost;
+  render();updateDotCount();
+  document.getElementById('status-text').textContent='Redo (Ctrl+Y / long press)';
+  if(navigator.vibrate)navigator.vibrate(30);
+}
+
+const TEMPLATE=[
+"0000000000000000000000000000",
+"0111111111111001111111111110",
+"0100001000001001000001000010",
+"0300001000001001000001000030",
+"0100001000001001000001000010",
+"0111111111111111111111111110",
+"0100001001000000010010000010",
+"0100001001000000010010000010",
+"0111111001111001111001111110",
+"0000001000001001000001000000",
+"0000001000001001000001000000",
+"0000001001111111111001000000",
+"0000001001000000001001000000",
+"0000001001000000001001000000",
+"1111111111000000001111111111",
+"0000001001000000001001000000",
+"0000001001000000001001000000",
+"0000001001111111111001000000",
+"0000001001000000001001000000",
+"0000001001000000001001000000",
+"0111111111111001111111111110",
+"0100001000001001000001000010",
+"0100001000001001000001000010",
+"0311001111111111111111001130",
+"0001001001000000001001001000",
+"0001001001000000001001001000",
+"0111111001111001111001111110",
+"0100000000001001000000000010",
+"0100000000001001000000000010",
+"0111111111111111111111111110",
+"0000000000000000000000000000"
+];
+
+function init(){
+  cv=document.getElementById('cv');
+  cx=cv.getContext('2d');
+  ts=Math.max(10,Math.min(18,Math.floor((window.innerHeight-160)/R)));
+  cv.width=C*ts;cv.height=R*ts;
+  loadTemplate();
+
+  // Tool selection
+  document.querySelectorAll('.tool[data-tool]').forEach(el=>{
+    el.onclick=()=>{
+      document.querySelectorAll('.tool').forEach(t=>t.classList.remove('active'));
+      el.classList.add('active');
+      currentTool=el.dataset.tool;
+      updateStatus();
+    };
+  });
+
+  // Drawing events
+  cv.addEventListener('mousedown',e=>{drawing=true;handleDraw(e)});
+  cv.addEventListener('mousemove',e=>{if(drawing)handleDraw(e)});
+  cv.addEventListener('mouseup',()=>{drawing=false;lastTile=null});
+  cv.addEventListener('mouseleave',()=>{drawing=false;lastTile=null});
+
+  // Touch events with two-finger tap for undo
+  let touchStartTime=0;
+  let lastTouchCount=0;
+  cv.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    touchStartTime=Date.now();
+    lastTouchCount=e.touches.length;
+    // Two-finger tap = undo
+    if(e.touches.length===2){
+      undo();
+      return;
+    }
+    drawing=true;handleDraw(e.touches[0]);
+  },{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(drawing&&e.touches.length===1)handleDraw(e.touches[0]);
+  },{passive:false});
+  cv.addEventListener('touchend',e=>{
+    // Long press (>500ms) with one finger = redo
+    if(lastTouchCount===1&&Date.now()-touchStartTime>500){
+      redo();
+    }
+    drawing=false;lastTouchCount=0;lastTile=null;
+  });
+
+  // Keyboard: Ctrl+Z = undo, Ctrl+Y = redo
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo()}
+    if((e.ctrlKey||e.metaKey)&&e.key==='y'){e.preventDefault();redo()}
+  });
+
+  // Resize
+  window.addEventListener('resize',()=>{
+    ts=Math.max(10,Math.min(18,Math.floor((window.innerHeight-160)/R)));
+    cv.width=C*ts;cv.height=R*ts;
+    render();
+  });
+}
+
+function getTile(e){
+  const rect=cv.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+  return{x:Math.floor(x/ts),y:Math.floor(y/ts)};
+}
+
+function handleDraw(e){
+  const t=getTile(e);
+  if(t.x<0||t.x>=C||t.y<0||t.y>=R)return;
+  if(lastTile&&lastTile.x===t.x&&lastTile.y===t.y)return;
+  lastTile=t;
+
+  if(currentTool==='fill'){
+    pushUndo();
+    floodFill(t.x,t.y);
+    render();updateDotCount();
+    return;
+  }
+
+  if(currentTool==='pacman'){
+    // Only allow placing on non-wall tiles
+    if(maze[t.y]&&maze[t.y][t.x]!==W){
+      pushUndo();
+      pacmanStart={x:t.x,y:t.y};
+      render();updateDotCount();
+    }
+    return;
+  }
+
+  if(currentTool==='ghost'){
+    // Only allow placing on non-wall tiles
+    if(maze[t.y]&&maze[t.y][t.x]!==W){
+      pushUndo();
+      ghostStart={x:t.x,y:t.y};
+      render();updateDotCount();
+    }
+    return;
+  }
+
+  // Regular drawing tools
+  pushUndo();
+  const val=currentTool==='wall'?W:currentTool==='erase'?E:currentTool==='dot'?D:currentTool==='power'?P:G;
+  if(maze[t.y])maze[t.y][t.x]=val;
+  render();
+  updateDotCount();
+}
+
+function floodFill(sx,sy){
+  const target=maze[sy][sx];
+  const val=currentTool==='erase'?E:currentTool==='dot'?D:currentTool==='power'?P:currentTool==='gate'?G:W;
+  if(target===val)return;
+  const stack=[[sx,sy]];
+  const visited=new Set();
+  while(stack.length){
+    const[x,y]=stack.pop();
+    const key=x+','+y;
+    if(visited.has(key))continue;
+    if(x<0||x>=C||y<0||y>=R)continue;
+    if(maze[y][x]!==target)continue;
+    visited.add(key);
+    maze[y][x]=val;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+}
+
+function loadTemplate(){
+  maze=[];
+  for(let r=0;r<R;r++){
+    maze[r]=[];
+    for(let c=0;c<C;c++){
+      maze[r][c]=parseInt(TEMPLATE[r][c]);
+    }
+  }
+  pacmanStart={x:14,y:23};
+  ghostStart={x:14,y:14};
+  undoStack=[];redoStack=[];
+  render();updateDotCount();
+}
+
+function clearMaze(){
+  pushUndo();
+  maze=[];
+  for(let r=0;r<R;r++){maze[r]=new Array(C).fill(E)}
+  pacmanStart={x:14,y:23};
+  ghostStart={x:14,y:14};
+  render();updateDotCount();
+}
+
+function randomMaze(){
+  pushUndo();
+  // Simple random maze using DFS
+  maze=[];
+  for(let r=0;r<R;r++){maze[r]=new Array(C).fill(W)}
+  // Carve passages
+  function carve(x,y){
+    maze[y][x]=D;
+    const dirs=[[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-0.5);
+    for(const[dx,dy]of dirs){
+      const nx=x+dx,ny=y+dy;
+      if(nx>0&&nx<C-1&&ny>0&&ny<R-1&&maze[ny][nx]===W){
+        maze[y+dy/2][x+dx/2]=D;
+        carve(nx,ny);
+      }
+    }
+  }
+  carve(1,1);
+  // Open center area for ghost house
+  for(let r=12;r<=16;r++)for(let c=11;c<=16;c++)maze[r][c]=D;
+  // Add power pellets in corners
+  const pellets=[[1,1],[26,1],[1,29],[26,29]];
+  for(const[px,py]of pellets)if(maze[py])maze[py][px]=P;
+  // Add tunnel
+  for(let c=0;c<2;c++){maze[14][c]=D;maze[14][C-1-c]=D}
+  pacmanStart={x:14,y:23};
+  ghostStart={x:14,y:14};
+  render();updateDotCount();
+}
+
+function render(){
+  cx.fillStyle='#000';cx.fillRect(0,0,cv.width,cv.height);
+  if(!maze.length)return;
+
+  // Draw tiles
+  for(let r=0;r<R;r++){
+    for(let c=0;c<C;c++){
+      const x=c*ts,y=r*ts;
+      const t=maze[r][c];
+      if(t===W){
+        cx.fillStyle='#0d0d3a';cx.fillRect(x,y,ts,ts);
+        // Walls - check neighbors
+        cx.strokeStyle='#4040ff';cx.lineWidth=Math.max(1,ts*0.06);cx.lineCap='round';
+        const top=r>0&&maze[r-1][c]===W;
+        const bot=r<R-1&&maze[r+1][c]===W;
+        const lt=c>0&&maze[r][c-1]===W;
+        const rt=c<C-1&&maze[r][c+1]===W;
+        if(!top){cx.beginPath();cx.moveTo(x,y+1);cx.lineTo(x+ts,y+1);cx.stroke()}
+        if(!bot){cx.beginPath();cx.moveTo(x,y+ts-1);cx.lineTo(x+ts,y+ts-1);cx.stroke()}
+        if(!lt){cx.beginPath();cx.moveTo(x+1,y);cx.lineTo(x+1,y+ts);cx.stroke()}
+        if(!rt){cx.beginPath();cx.moveTo(x+ts-1,y);cx.lineTo(x+ts-1,y+ts);cx.stroke()}
+      }else if(t===D){
+        cx.fillStyle='#ffb8ae';cx.beginPath();cx.arc(x+ts/2,y+ts/2,Math.max(1.5,ts*0.08),0,Math.PI*2);cx.fill();
+      }else if(t===P){
+        cx.fillStyle='#ffb8ae';cx.beginPath();cx.arc(x+ts/2,y+ts/2,Math.max(3,ts*0.25),0,Math.PI*2);cx.fill();
+      }else if(t===G){
+        cx.fillStyle='#ff88ff';cx.fillRect(x,y+ts*0.4,ts,ts*0.2);
+      }
+    }
+  }
+
+  // Draw Pacman start
+  cx.fillStyle='#ffff00';
+  cx.beginPath();cx.arc(pacmanStart.x*ts+ts/2,pacmanStart.y*ts+ts/2,ts*0.4,0.2*Math.PI,1.8*Math.PI);
+  cx.lineTo(pacmanStart.x*ts+ts/2,pacmanStart.y*ts+ts/2);cx.closePath();cx.fill();
+  cx.fillStyle='#ffcc00';cx.font=`bold ${ts*0.35}px sans-serif`;cx.textAlign='center';
+  cx.fillText('P',pacmanStart.x*ts+ts/2,pacmanStart.y*ts+ts/2+ts*0.15);
+
+  // Draw Ghost start
+  cx.fillStyle='#ff4488';cx.beginPath();
+  cx.arc(ghostStart.x*ts+ts/2,ghostStart.y*ts+ts/2,ts*0.35,Math.PI,0);
+  cx.lineTo(ghostStart.x*ts+ts/2+ts*0.35,ghostStart.y*ts+ts/2+ts*0.3);
+  cx.lineTo(ghostStart.x*ts+ts/2-ts*0.35,ghostStart.y*ts+ts/2+ts*0.3);cx.closePath();cx.fill();
+  cx.fillStyle='#fff';cx.beginPath();
+  cx.arc(ghostStart.x*ts+ts/2-ts*0.1,ghostStart.y*ts+ts/2-ts*0.05,ts*0.08,0,Math.PI*2);cx.fill();
+  cx.beginPath();cx.arc(ghostStart.x*ts+ts/2+ts*0.1,ghostStart.y*ts+ts/2-ts*0.05,ts*0.08,0,Math.PI*2);cx.fill();
+}
+
+function updateDotCount(){
+  if(!maze.length)return;
+  let d=0,p=0;
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){if(maze[r][c]===D)d++;if(maze[r][c]===P)p++}
+  document.getElementById('dot-count').textContent=`Dots: ${d} | Power: ${p} | Total: ${d+p}`;
+}
+
+function updateStatus(){
+  const names={wall:'Draw walls',erase:'Erase tiles',dot:'Place dots',power:'Place power pellets',gate:'Place ghost gate',pacman:'Set Pac-Man start',ghost:'Set Ghost start',fill:'Fill area'};
+  document.getElementById('status-text').textContent=names[currentTool]||'';
+}
+
+function mazeToArray(){
+  return maze.map(r=>r.join(''));
+}
+
+function saveMaze(){
+  const name=document.getElementById('maze-name').value.trim()||'Unnamed';
+  const data={name,maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart,date:Date.now()};
+  let saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  // Update if exists
+  const idx=saved.findIndex(s=>s.name===name);
+  if(idx>=0)saved[idx]=data;else saved.unshift(data);
+
+  try{
+    localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+    document.getElementById('status-text').textContent=`Saved: ${name}`;
+    setTimeout(updateStatus,2000);
+  }catch(e){
+    if(e.name==='QuotaExceededError'){
+      // Auto-cleanup: remove oldest mazes until it fits
+      while(saved.length>1){
+        saved.pop(); // Remove oldest
+        try{
+          localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+          document.getElementById('status-text').textContent=`Saved: ${name} (removed old mazes to fit)`;
+          setTimeout(updateStatus,2000);
+          return;
+        }catch(e2){}
+      }
+      alert('Storage is full! Export your mazes as backup first, then delete some to make space.');
+    }else{
+      alert('Failed to save: '+e.message);
+    }
+  }
+}
+
+function toggleSaved(){
+  document.getElementById('saved-panel').classList.toggle('open');
+  loadSavedList();
+}
+
+// ─── Storage Quota Management ───
+function getStorageUsage(){
+  let total=0;
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    total+=(key.length+localStorage.getItem(key).length)*2; // UTF-16 bytes
+  }
+  return total;
+}
+
+function formatBytes(bytes){
+  if(bytes<1024)return bytes+' B';
+  if(bytes<1048576)return(bytes/1024).toFixed(1)+' KB';
+  return(bytes/1048576).toFixed(1)+' MB';
+}
+
+function updateStorageInfo(){
+  const used=getStorageUsage();
+  const limit=5*1024*1024; // ~5MB typical localStorage limit
+  const pct=Math.min(100,Math.round(used/limit*100));
+  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const mazeBytes=saved.length?JSON.stringify(saved).length*2:0;
+
+  const el=document.getElementById('storage-info');
+  if(!el)return;
+
+  let color='#22c55e';
+  let warnText='';
+  if(pct>=90){color='#ef4444';warnText='⚠️ Storage almost full! Delete some mazes or export them.'}
+  else if(pct>=70){color='#f59e0b';warnText='⚠️ Approaching storage limit'}
+  else if(pct>=50){color='#3b82f6';warnText='Using half your storage space'}
+
+  el.innerHTML=`
+    <div class="storage-text">
+      <span>${saved.length} maze${saved.length!==1?'s':''} — ${formatBytes(mazeBytes)} used</span>
+      <span style="color:${color}">${pct}%</span>
+    </div>
+    <div class="storage-bar"><div class="storage-fill" style="width:${pct}%;background:${color}"></div></div>
+    ${warnText?`<div class="storage-warn">${warnText}</div>`:''}
+    ${saved.length?`<button onclick="clearAllMazes()" style="margin-top:6px;padding:4px 8px;border:1px solid #555;background:#333;color:#ef4444;border-radius:4px;font-size:0.75rem;cursor:pointer">🗑️ Clear All Saved Mazes</button>`:''}
+  `;
+}
+
+function clearAllMazes(){
+  if(!confirm('Delete ALL saved mazes? This cannot be undone.'))return;
+  localStorage.removeItem('pacme_mazes');
+  loadSavedList();
+}
+
+function loadSavedList(){
+  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const list=document.getElementById('saved-list');
+  updateStorageInfo();
+  if(!saved.length){list.innerHTML='<p style="color:#888;padding:12px;text-align:center">No saved mazes yet<br><small>Draw a maze and click 💾 Save</small></p>';return}
+  list.innerHTML=saved.map((s,i)=>`
+    <div class="saved-item" onclick="loadMaze(${i})">
+      <div class="name">${s.name}</div>
+      <div class="meta">${s.date?new Date(s.date).toLocaleDateString():''} — ${s.maze?s.maze[0].length:0} cols</div>
+      <div class="actions">
+        <button onclick="event.stopPropagation();loadMaze(${i})">Load</button>
+        <button onclick="event.stopPropagation();exportMaze(${i})">Export</button>
+        <button class="del" onclick="event.stopPropagation();deleteMaze(${i})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadMaze(i){
+  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const s=saved[i];if(!s)return;
+  undoStack=[];redoStack=[];
+  document.getElementById('maze-name').value=s.name;
+  maze=s.maze.map(r=>r.split('').map(Number));
+  pacmanStart=s.pacman||{x:14,y:23};
+  ghostStart=s.ghost||{x:14,y:14};
+  render();updateDotCount();
+  toggleSaved();
+}
+
+function deleteMaze(i){
+  let saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const name=saved[i].name;
+  saved.splice(i,1);
+  localStorage.setItem('pacme_mazes',JSON.stringify(saved));
+  loadSavedList();
+}
+
+function exportMaze(i){
+  const saved=JSON.parse(localStorage.getItem('pacme_mazes')||'[]');
+  const s=i!==undefined?saved[i]:{name:document.getElementById('maze-name').value.trim()||'maze',maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart};
+  const data=JSON.stringify(s);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=s.name.replace(/[^a-z0-9]/gi,'_')+'.json';a.click();
+}
+
+function importMaze(){
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(data.maze&&Array.isArray(data.maze)){
+          document.getElementById('maze-name').value=data.name||'Imported';
+          maze=data.maze.map(r=>r.split('').map(Number));
+          pacmanStart=data.pacman||{x:14,y:23};
+          ghostStart=data.ghost||{x:14,y:14};
+          render();updateDotCount();
+          document.getElementById('status-text').textContent='Imported successfully';
+        }
+      }catch(err){alert('Invalid maze file')}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function playTest(){
+  // Validate maze structure
+  let dotCount=0;
+  let wallCount=0;
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){
+    if(maze[r][c]===D||maze[r][c]===P)dotCount++;
+    if(maze[r][c]===W)wallCount++;
+  }
+
+  // Check Pac-Man position is valid
+  if(maze[pacmanStart.y][pacmanStart.x]===W){
+    document.getElementById('status-text').textContent='⚠️ Pac-Man start is on a wall!';
+    setTimeout(updateStatus,3000);
+    return;
+  }
+
+  // Check Ghost position is valid
+  if(maze[ghostStart.y][ghostStart.x]===W){
+    document.getElementById('status-text').textContent='⚠️ Ghost start is on a wall!';
+    setTimeout(updateStatus,3000);
+    return;
+  }
+
+  if(dotCount<10){
+    document.getElementById('status-text').textContent='⚠️ Add more dots before testing!';
+    setTimeout(updateStatus,3000);
+    return;
+  }
+
+  if(wallCount<50){
+    document.getElementById('status-text').textContent='⚠️ Add more walls for a proper maze!';
+    setTimeout(updateStatus,3000);
+    return;
+  }
+
+  // Save current maze to BOTH sessionStorage and localStorage for reliability
+  const data=JSON.stringify({maze:mazeToArray(),pacman:pacmanStart,ghost:ghostStart});
+  sessionStorage.setItem('pacme_testmaze',data);
+  localStorage.setItem('pacme_testmaze_last',data);
+  // Navigate to game
+  window.location.href='index.html';
+}
+
+init();
+</script>
+</body>
+</html>
