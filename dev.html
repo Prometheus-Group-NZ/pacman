@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PacMan — Dev Test</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟡</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#0a0a0b;color:#f4f4f5;font-family:'Segoe UI',system-ui,sans-serif}
+
+#layout{display:flex;height:100%}
+
+/* ─── Game panel ─── */
+#game-panel{flex:1;display:flex;flex-direction:column;min-width:0}
+#game-panel iframe{flex:1;border:none;background:#000}
+
+/* ─── Comments panel ─── */
+#comments-panel{width:380px;display:flex;flex-direction:column;border-left:1px solid #27272a;background:#111;flex-shrink:0}
+#comments-panel h2{padding:12px 16px;font-size:0.95rem;color:#ffcc00;letter-spacing:1px;border-bottom:1px solid #27272a;display:flex;align-items:center;gap:8px;flex-shrink:0}
+#comments-panel h2 .count{background:#333;padding:1px 8px;border-radius:10px;font-size:0.75rem;color:#aaa}
+
+/* Comment list */
+#comment-list{flex:1;overflow-y:auto;padding:10px}
+#comment-list::-webkit-scrollbar{width:6px}
+#comment-list::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+.comment-card{background:#1a1a1a;border:1px solid #27272a;border-radius:10px;padding:12px;margin-bottom:8px;transition:border-color 0.2s}
+.comment-card:hover{border-color:#444}
+.comment-card.unread{border-left:3px solid #ffcc00}
+.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.comment-author{font-weight:600;font-size:0.85rem;color:#f4f4f5}
+.comment-cat{font-size:0.7rem;padding:2px 8px;border-radius:6px;font-weight:600}
+.cat-bug{background:#ef4444;color:#fff}
+.cat-feature{background:#3b82f6;color:#fff}
+.cat-improvement{background:#22c55e;color:#000}
+.cat-general{background:#666;color:#fff}
+.cat-suggestion{background:#a855f7;color:#fff}
+.comment-msg{font-size:0.82rem;color:#bbb;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.comment-time{font-size:0.7rem;color:#555;margin-top:6px}
+
+/* Submit form */
+#comment-form{border-top:1px solid #27272a;padding:12px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+#comment-form input,#comment-form select,#comment-form textarea{
+  background:#1a1a1a;border:1px solid #333;color:#f4f4f5;padding:8px 10px;border-radius:6px;font-size:0.82rem;font-family:inherit;resize:none;
+  transition:border-color 0.2s;
+}
+#comment-form input:focus,#comment-form select:focus,#comment-form textarea:focus{outline:none;border-color:#3b82f6}
+#comment-form select{cursor:pointer}
+#comment-form select option{background:#1a1a1a}
+.form-row{display:flex;gap:6px}
+.form-row input{flex:1}
+#comment-form textarea{height:60px}
+#submit-btn{
+  background:#ffcc00;color:#000;border:none;padding:8px;border-radius:6px;font-weight:700;font-size:0.85rem;cursor:pointer;
+  transition:background 0.2s;
+}
+#submit-btn:hover{background:#ffe033}
+#submit-btn:disabled{opacity:0.5;cursor:default}
+
+/* Status messages */
+.form-status{font-size:0.75rem;text-align:center;min-height:16px}
+.form-status.ok{color:#22c55e}
+.form-status.err{color:#ef4444}
+
+/* Empty state */
+.empty-state{text-align:center;color:#555;padding:40px 20px;font-size:0.85rem}
+.empty-state .ico{font-size:2rem;margin-bottom:8px}
+
+/* Refresh button */
+#refresh-btn{
+  background:none;border:1px solid #444;color:#aaa;padding:3px 10px;border-radius:6px;font-size:0.72rem;
+  cursor:pointer;margin-left:auto;transition:all 0.2s;
+}
+#refresh-btn:hover{border-color:#ffcc00;color:#ffcc00}
+
+/* Toast notification */
+#toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);
+  background:#22c55e;color:#000;padding:10px 24px;border-radius:8px;font-weight:600;font-size:0.85rem;
+  z-index:999;transition:transform 0.3s ease;pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Responsive */
+@media(max-width:900px){
+  #layout{flex-direction:column}
+  #comments-panel{width:100%;height:50vh;border-left:none;border-top:1px solid #27272a}
+  #game-panel{height:50vh}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="layout">
+  <!-- Game (embedded via iframe) -->
+  <div id="game-panel">
+    <iframe id="game-frame" src="index.html" sandbox="allow-scripts allow-same-origin allow-popups" title="PacMan Game"></iframe>
+  </div>
+
+  <!-- Tester Comments Panel -->
+  <div id="comments-panel">
+    <h2>
+      💬 Tester Comments
+      <span class="count" id="comment-count">0</span>
+      <button id="refresh-btn" onclick="loadComments()">↻ Refresh</button>
+    </h2>
+    <div id="comment-list">
+      <div class="empty-state"><div class="ico">📝</div>No comments yet.<br>Be the first to leave feedback!</div>
+    </div>
+    <form id="comment-form" onsubmit="submitComment(event)">
+      <div class="form-row">
+        <input type="text" id="f-name" placeholder="Your name (optional)">
+        <select id="f-category">
+          <option value="general">📌 General</option>
+          <option value="bug">🐛 Bug</option>
+          <option value="feature">✨ Feature</option>
+          <option value="improvement">🔧 Improvement</option>
+          <option value="suggestion">💡 Suggestion</option>
+        </select>
+      </div>
+      <input type="email" id="f-email" placeholder="Email (optional)">
+      <textarea id="f-message" placeholder="Your feedback..." required></textarea>
+      <button type="submit" id="submit-btn">Submit Comment</button>
+      <div class="form-status" id="form-status"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ─── Configuration ───
+// ⚠️ Set these to match your Cloudflare Worker deployment
+const API_URL = 'https://pacme-api.prometheus-admin-dion-climo.workers.dev/api/comments';
+const API_SECRET = 'pacme-dev-2026-x7k9m';
+
+// ─── Load Comments ───
+async function loadComments() {
+  const btn = document.getElementById('refresh-btn');
+  btn.style.opacity = '0.5';
+  try {
+    const res = await fetch(API_URL, {
+      headers: { 'Authorization': `Bearer ${API_SECRET}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderComments(data.comments || []);
+  } catch (err) {
+    console.error('Failed to load comments:', err);
+    document.getElementById('comment-list').innerHTML =
+      `<div class="empty-state"><div class="ico">⚠️</div>Failed to load comments.<br><small style="color:#888">${err.message}</small></div>`;
+    document.getElementById('comment-count').textContent = '!';
+  }
+  btn.style.opacity = '1';
+}
+
+function renderComments(comments) {
+  const list = document.getElementById('comment-list');
+  const count = document.getElementById('comment-count');
+  count.textContent = comments.length;
+
+  if (!comments.length) {
+    list.innerHTML = '<div class="empty-state"><div class="ico">📝</div>No comments yet.<br>Be the first to leave feedback!</div>';
+    return;
+  }
+
+  const catClass = {bug:'cat-bug',feature:'cat-feature',improvement:'cat-improvement',suggestion:'cat-suggestion'};
+  const catEmoji = {bug:'🐛',feature:'✨',improvement:'🔧',suggestion:'💡',general:'📌'};
+
+  list.innerHTML = comments.map(c => {
+    const age = timeAgo(c.timestamp);
+    const isNew = (Date.now() - c.timestamp) < 300000; // 5 min = "new"
+    return `
+      <div class="comment-card ${isNew ? 'unread' : ''}">
+        <div class="comment-header">
+          <span class="comment-author">${esc(c.name || 'Anonymous')}</span>
+          <span class="comment-cat ${catClass[c.category] || 'cat-general'}">${catEmoji[c.category] || '📌'} ${esc(c.category || 'general')}</span>
+        </div>
+        <div class="comment-msg">${esc(c.message)}</div>
+        <div class="comment-time">${age}${c.email ? ' · ' + esc(c.email) : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Submit Comment ───
+async function submitComment(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('form-status');
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const category = document.getElementById('f-category').value;
+  const message = document.getElementById('f-message').value.trim();
+
+  if (!message) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  status.className = 'form-status';
+  status.textContent = '';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_SECRET}`,
+      },
+      body: JSON.stringify({ name, email, category, message }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    status.className = 'form-status ok';
+    status.textContent = '✅ Comment submitted!';
+    document.getElementById('f-message').value = '';
+    showToast('Comment submitted successfully');
+    loadComments(); // Refresh list
+  } catch (err) {
+    status.className = 'form-status err';
+    status.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Comment';
+    setTimeout(() => { status.textContent = ''; }, 4000);
+  }
+}
+
+// ─── Helpers ───
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const secs = Math.floor(diff / 1000);
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Auto-refresh comments every 30 seconds
+loadComments();
+setInterval(loadComments, 30000);
+</script>
+</body>
+</html>

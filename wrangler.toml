@@ -1,9 +1,18 @@
-name = "pacme"
+# ─── Cloudflare Worker (comments API) ───
+name = "pacme-api"
+main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-[site]
-bucket = "."
+kv_namespaces = [
+  { binding = "COMMENTS", id = "e1b21522fff14c5283b9a235356683c8" }
+]
 
-[build]
-command = ""
-publish = "."
+account_id = "24db3a948e66b99b8dc77345f5745ea0"
+
+[vars]
+API_SECRET = "pacme-dev-2026-x7k9m"
+
+# ─── Static site (pacme.pages.dev) ───
+# Deploy separately via Pages dashboard or:
+#   npx wrangler pages deploy . --project-name=pacme
+
