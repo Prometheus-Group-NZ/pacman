@@ -7,8 +7,12 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟡</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Segoe UI',system-ui,sans-serif}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#000;font-family:'Segoe UI',system-ui,sans-serif}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none}
+
+/* ─── Layout: game + comments ─── */
+#main-layout{display:flex;width:100%;height:100dvh;overflow:hidden}
+#game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;overflow:hidden}
 
 #hud{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:448px;padding:6px 12px;color:#fff;font-size:clamp(11px,2.5vw,15px);font-weight:600;letter-spacing:0.5px;flex-shrink:0}
 #hud .score-label{color:#aaa;font-size:0.85em}
@@ -17,12 +21,67 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 #hud .level-label{color:#0ff}
 #hud .lives{display:flex;gap:5px}
 #hud .life-icon{width:14px;height:14px;background:#ffcc00;border-radius:50%;clip-path:polygon(100% 50%,40% 15%,15% 50%,15% 85%,40% 85%)}
+#hud a{color:#3b82f6;text-decoration:none;font-size:0.8em;font-weight:600}
 
 #game-wrapper{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:1;min-height:0}
 canvas{display:block;image-rendering:crisp-edges}
 
+/* Comments toggle button */
+#comments-toggle{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:200;background:#111;border:1px solid #333;border-right:none;border-radius:8px 0 0 8px;padding:8px 4px;color:#ffcc00;font-size:14px;cursor:pointer;writing-mode:vertical-rl;letter-spacing:1px;font-weight:600;transition:all 0.2s}
+#comments-toggle:hover{background:#222}
+#comments-toggle .badge{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center}
+
+/* Comments panel */
+#comments-panel{width:340px;background:#111;border-left:1px solid #27272a;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width 0.25s ease,opacity 0.25s}
+#comments-panel.closed{width:0;opacity:0;border:none;pointer-events:none}
+#comments-panel h2{padding:10px 14px;font-size:0.9rem;color:#ffcc00;letter-spacing:1px;border-bottom:1px solid #27272a;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#comments-panel h2 .count{background:#333;padding:1px 8px;border-radius:10px;font-size:0.7rem;color:#aaa}
+#comments-panel h2 .close-btn{margin-left:auto;background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;padding:2px 6px;border-radius:4px}
+#comments-panel h2 .close-btn:hover{color:#fff;background:#333}
+
+#comment-list{flex:1;overflow-y:auto;padding:8px}
+#comment-list::-webkit-scrollbar{width:5px}
+#comment-list::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+.comment-card{background:#1a1a1a;border:1px solid #27272a;border-radius:8px;padding:10px;margin-bottom:6px}
+.comment-card.unread{border-left:3px solid #ffcc00}
+.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.comment-author{font-weight:600;font-size:0.8rem;color:#f4f4f5}
+.comment-cat{font-size:0.65rem;padding:1px 6px;border-radius:5px;font-weight:600}
+.cat-bug{background:#ef4444;color:#fff}
+.cat-feature{background:#3b82f6;color:#fff}
+.cat-improvement{background:#22c55e;color:#000}
+.cat-general{background:#666;color:#fff}
+.cat-suggestion{background:#a855f7;color:#fff}
+.comment-msg{font-size:0.78rem;color:#bbb;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.comment-time{font-size:0.65rem;color:#555;margin-top:4px}
+
+#comment-form{border-top:1px solid #27272a;padding:10px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+#comment-form input,#comment-form select,#comment-form textarea{
+  background:#1a1a1a;border:1px solid #333;color:#f4f4f5;padding:6px 8px;border-radius:5px;font-size:0.78rem;font-family:inherit;resize:none;
+}
+#comment-form input:focus,#comment-form select:focus,#comment-form textarea:focus{outline:none;border-color:#3b82f6}
+#comment-form select{cursor:pointer}
+#comment-form select option{background:#1a1a1a}
+.form-row{display:flex;gap:5px}
+.form-row input{flex:1}
+#comment-form textarea{height:50px}
+#submit-btn{
+  background:#ffcc00;color:#000;border:none;padding:6px;border-radius:5px;font-weight:700;font-size:0.8rem;cursor:pointer;
+}
+#submit-btn:hover{background:#ffe033}
+#submit-btn:disabled{opacity:0.5;cursor:default}
+.form-status{font-size:0.7rem;text-align:center;min-height:14px}
+.form-status.ok{color:#22c55e}
+.form-status.err{color:#ef4444}
+.empty-state{text-align:center;color:#555;padding:30px 16px;font-size:0.8rem}
+.empty-state .ico{font-size:1.5rem;margin-bottom:6px}
+
+#refresh-btn{background:none;border:1px solid #444;color:#aaa;padding:2px 8px;border-radius:5px;font-size:0.65rem;cursor:pointer;margin-left:auto}
+#refresh-btn:hover{border-color:#ffcc00;color:#ffcc00}
+
 /* Touch D-Pad — shown on tablets and phones */
-#touch-controls{display:none;position:fixed;bottom:0;left:0;right:0;height:clamp(140px,22vh,200px);z-index:10;pointer-events:none}
+#touch-controls{display:none;position:fixed;bottom:0;left:0;right:0;height:clamp(140px,22dvh,200px);z-index:10;pointer-events:none}
 .d-pad{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,clamp(48px,12vw,68px));grid-template-rows:repeat(3,clamp(48px,12vw,68px));gap:4px;pointer-events:auto}
 .d-btn{background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.12);border-radius:14px;color:rgba(255,255,255,0.45);font-size:clamp(16px,4vw,24px);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-user-select:none;user-select:none}
 .d-btn:active{background:rgba(255,204,0,0.18);border-color:rgba(255,204,0,0.35);color:rgba(255,204,0,0.8)}
@@ -32,27 +91,33 @@ canvas{display:block;image-rendering:crisp-edges}
 .d-right{grid-column:3;grid-row:2}
 .d-down{grid-column:2;grid-row:3}
 
-/* Show on touch devices (phones, tablets) */
 @media(hover:none)and(pointer:coarse){#touch-controls{display:block}}
 @media(max-width:1024px){#touch-controls{display:block}}
-/* Hide on desktop even if narrow window */
 @media(min-width:1025px){#touch-controls{display:none!important}}
-/* Tablet-specific sizing */
 @media(min-width:601px)and(max-width:1024px){
-  #touch-controls{height:clamp(160px,20vh,220px)}
+  #touch-controls{height:clamp(160px,20dvh,220px)}
   .d-pad{grid-template-columns:repeat(3,clamp(56px,14vw,76px));grid-template-rows:repeat(3,clamp(56px,14vw,76px));gap:6px}
   .d-btn{font-size:clamp(20px,5vw,28px);border-radius:16px}
 }
-/* Phone sizing */
 @media(max-width:600px){
-  #touch-controls{height:clamp(130px,24vh,180px)}
+  #touch-controls{height:clamp(130px,24dvh,180px)}
   .d-pad{grid-template-columns:repeat(3,clamp(44px,13vw,60px));grid-template-rows:repeat(3,clamp(44px,13vw,60px));gap:3px}
 }
 
+/* ─── Portrait: stack vertically ─── */
+@media(max-width:900px),(orientation:portrait){
+  #main-layout{flex-direction:column}
+  #comments-panel{width:100%!important;height:45dvh;border-left:none;border-top:1px solid #27272a}
+  #comments-panel.closed{height:0;width:0}
+  #comments-toggle{top:auto;bottom:45dvh;right:8px;transform:none;writing-mode:horizontal-tb;border-radius:8px 8px 0 0;border:1px solid #333;border-bottom:none;padding:4px 10px}
+  #comments-toggle.closed{bottom:0}
+  #game-area{height:55dvh}
+}
+
 /* Controls Modal */
-#controls-modal{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+#controls-modal{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;z-index:300;padding:16px}
 #controls-modal.visible{display:flex}
-.modal-box{background:#111;border:2px solid #2a2a2a;border-radius:16px;padding:24px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 0 60px rgba(255,204,0,0.1)}
+.modal-box{background:#111;border:2px solid #2a2a2a;border-radius:16px;padding:24px;max-width:460px;width:100%;max-height:90dvh;overflow-y:auto;box-shadow:0 0 60px rgba(255,204,0,0.1)}
 .modal-box h2{color:#ffcc00;font-size:1.6rem;margin-bottom:12px;text-align:center;letter-spacing:3px}
 .modal-box h3{color:#0ff;font-size:0.95rem;margin:14px 0 6px;letter-spacing:1px}
 .modal-box p,.modal-box li{color:#bbb;font-size:0.88rem;line-height:1.5}
@@ -69,7 +134,7 @@ canvas{display:block;image-rendering:crisp-edges}
 .btn-never{background:transparent;color:#666;border:1px solid #444;margin-top:10px;width:100%;padding:10px;border-radius:8px;font-size:0.82rem;cursor:pointer}.btn-never:hover{color:#aaa;border-color:#666}
 
 /* Game Over Overlay */
-#go-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:20px}
+#go-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:250;flex-direction:column;gap:20px}
 #go-overlay.vis{display:flex}
 #go-overlay h1{color:#ff3333;font-size:clamp(1.8rem,6vw,3rem);letter-spacing:6px;text-shadow:0 0 20px rgba(255,0,0,0.4)}
 #go-overlay p{color:#aaa;font-size:1.1rem}
@@ -82,14 +147,47 @@ canvas{display:block;image-rendering:crisp-edges}
 </head>
 <body>
 
-<div id="hud">
-  <div><span class="score-label">SCORE</span><br><span class="score" id="score-val">0</span></div>
-  <div style="text-align:center"><span class="level-label" id="lvl-val">LEVEL 1</span></div>
-  <div style="text-align:center"><span style="color:#666;font-size:0.75em">HIGH</span><br><span class="high" id="hi-val">0</span></div>
-  <div class="lives" id="lives-box"></div>
+<div id="main-layout">
+  <div id="game-area">
+    <div id="hud">
+      <div><span class="score-label">SCORE</span><br><span class="score" id="score-val">0</span></div>
+      <div style="text-align:center"><span class="level-label" id="lvl-val">LEVEL 1</span></div>
+      <div style="text-align:center"><span style="color:#666;font-size:0.75em">HIGH</span><br><span class="high" id="hi-val">0</span></div>
+      <div class="lives" id="lives-box"></div>
+    </div>
+    <div id="game-wrapper"><canvas id="cv"></canvas></div>
+  </div>
+
+  <div id="comments-panel" class="closed">
+    <h2>
+      💬 Tester Comments
+      <span class="count" id="comment-count">0</span>
+      <button id="refresh-btn" onclick="loadComments()">↻</button>
+      <button class="close-btn" id="close-comments" onclick="toggleComments()">✕</button>
+    </h2>
+    <div id="comment-list">
+      <div class="empty-state"><div class="ico">📝</div>No comments yet</div>
+    </div>
+    <form id="comment-form" onsubmit="submitComment(event)">
+      <div class="form-row">
+        <input type="text" id="f-name" placeholder="Name (optional)">
+        <select id="f-category">
+          <option value="general">📌 General</option>
+          <option value="bug">🐛 Bug</option>
+          <option value="feature">✨ Feature</option>
+          <option value="improvement">🔧 Improvement</option>
+          <option value="suggestion">💡 Suggestion</option>
+        </select>
+      </div>
+      <input type="email" id="f-email" placeholder="Email (optional)">
+      <textarea id="f-message" placeholder="Your feedback..." required></textarea>
+      <button type="submit" id="submit-btn">Submit Comment</button>
+      <div class="form-status" id="form-status"></div>
+    </form>
+  </div>
 </div>
 
-<div id="game-wrapper"><canvas id="cv"></canvas></div>
+<button id="comments-toggle" onclick="toggleComments()">💬 Comments<span class="badge" id="comment-badge"></span></button>
 
 <div id="touch-controls">
   <div class="d-pad">
@@ -339,12 +437,12 @@ function init(){
   // Force a small initial size so canvas is never 0
   ts=14;
   cv.width=C*ts;cv.height=R*ts;
-  // Initialize wall offscreen canvas
   wallCV=document.createElement('canvas');
   wallCV.width=cv.width;wallCV.height=cv.height;
   wallCX=wallCV.getContext('2d');
 
   window.addEventListener('resize',()=>{resize();needRender=true});
+  window.addEventListener('orientationchange',()=>{setTimeout(()=>{resize();needRender=true},300)});
   input();
 
   // Build initial maze so idle screen can render
@@ -367,16 +465,18 @@ function init(){
 function closeModal(){document.getElementById('controls-modal').classList.remove('visible')}
 
 function resize(){
+  const panel=document.getElementById('comments-panel');
+  const panelW=panel&&!panel.classList.contains('closed')?340:0;
   const hud=document.getElementById('hud');
   const hudH=hud?hud.offsetHeight:40;
+  const isPortrait=window.matchMedia('(orientation:portrait)').matches||window.innerWidth<=900;
   const tc=window.matchMedia('(hover:none)and(pointer:coarse)').matches||window.innerWidth<=600;
-  const availW=Math.min(window.innerWidth-16,500);
-  const availH=Math.max(200,window.innerHeight-hudH-(tc?170:10)-20);
+  const availW=Math.min(window.innerWidth-panelW-16,500);
+  const availH=isPortrait?Math.max(200,window.innerHeight*0.55-hudH-20):Math.max(200,window.innerHeight-hudH-(tc?170:10)-20);
   ts=Math.max(10,Math.floor(Math.min(availW/C,availH/R)));
   cv.width=C*ts;cv.height=R*ts;
   const wrap=document.getElementById('game-wrapper');
   wrap.style.width=cv.width+'px';wrap.style.height=cv.height+'px';
-  // Rebuild wall canvas at new size
   wallCV=document.createElement('canvas');
   wallCV.width=cv.width;wallCV.height=cv.height;
   wallCX=wallCV.getContext('2d');
@@ -1308,6 +1408,84 @@ function drawPause(){
 init();loop();
 
 })();
+
+/* ═══════════════════════════════════════════════════
+   COMMENTS PANEL (outside game IIFE)
+   ═══════════════════════════════════════════════════ */
+const API_URL='https://pacme-api.prometheus-admin-dion-climo.workers.dev/api/comments';
+const API_SECRET='pacme-dev-2026-x7k9m';
+let commentsOpen=false;
+
+function toggleComments(){
+  const panel=document.getElementById('comments-panel');
+  const toggle=document.getElementById('comments-toggle');
+  commentsOpen=!commentsOpen;
+  panel.classList.toggle('closed',!commentsOpen);
+  toggle.classList.toggle('closed',!commentsOpen);
+  setTimeout(()=>{resize();needRender=true},260);
+  if(commentsOpen&&document.getElementById('comment-list').children.length<=1)loadComments();
+}
+
+async function loadComments(){
+  const btn=document.getElementById('refresh-btn');
+  if(btn)btn.style.opacity='0.5';
+  try{
+    const res=await fetch(API_URL,{headers:{'Authorization':'Bearer '+API_SECRET}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    renderComments(data.comments||[]);
+  }catch(err){console.error('Failed to load comments:',err)}
+  if(btn)btn.style.opacity='1';
+}
+
+function renderComments(comments){
+  const list=document.getElementById('comment-list');
+  const count=document.getElementById('comment-count');
+  const badge=document.getElementById('comment-badge');
+  count.textContent=comments.length;
+  if(comments.length>0)badge.style.display='flex';
+  else badge.style.display='none';
+  if(!comments.length){
+    list.innerHTML='<div class="empty-state"><div class="ico">📝</div>No comments yet</div>';
+    return;
+  }
+  const cc={bug:'cat-bug',feature:'cat-feature',improvement:'cat-improvement',suggestion:'cat-suggestion'};
+  const ce={bug:'🐛',feature:'✨',improvement:'🔧',suggestion:'💡',general:'📌'};
+  list.innerHTML=comments.map(c=>{
+    const age=timeAgo(c.timestamp);
+    const isNew=(Date.now()-c.timestamp)<300000;
+    return '<div class="comment-card'+(isNew?' unread':'')+'">'+
+      '<div class="comment-header"><span class="comment-author">'+esc(c.name||'Anonymous')+'</span>'+
+      '<span class="comment-cat '+(cc[c.category]||'cat-general')+'">'+(ce[c.category]||'📌')+' '+esc(c.category||'general')+'</span></div>'+
+      '<div class="comment-msg">'+esc(c.message)+'</div>'+
+      '<div class="comment-time">'+age+'</div></div>';
+  }).join('');
+}
+
+async function submitComment(e){
+  e.preventDefault();
+  const btn=document.getElementById('submit-btn');
+  const status=document.getElementById('form-status');
+  const name=document.getElementById('f-name').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const category=document.getElementById('f-category').value;
+  const message=document.getElementById('f-message').value.trim();
+  if(!message)return;
+  btn.disabled=true;btn.textContent='Sending...';
+  status.className='form-status';status.textContent='';
+  try{
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_SECRET},body:JSON.stringify({name,email,category,message})});
+    if(!res.ok)throw new Error(await res.text());
+    status.className='form-status ok';status.textContent='✅ Submitted!';
+    document.getElementById('f-message').value='';
+    loadComments();
+  }catch(err){status.className='form-status err';status.textContent='Error: '+err.message}
+  btn.disabled=false;btn.textContent='Submit Comment';
+  setTimeout(()=>{status.textContent=''},4000);
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function timeAgo(ts){const s=Math.floor((Date.now()-ts)/1000);if(s<60)return 'just now';const m=Math.floor(s/60);if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago'}
 </script>
 </body>
 </html>
