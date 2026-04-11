@@ -1,5 +1,0 @@
-worker/
-wrangler-api.toml
-wrangler.toml
-.qwen/
-.wrangler/

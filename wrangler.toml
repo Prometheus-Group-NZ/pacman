@@ -1,4 +1,2 @@
-# ─── Pages static site config ───
-name = "pacman-100426"
-compatibility_date = "2024-01-01"
+name = "pacman"
 pages_build_output_dir = "."
