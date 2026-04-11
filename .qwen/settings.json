@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config *)",
+      "Bash(findstr *)",
+      "Bash(cmdkey *)",
+      "Bash(git push)",
+      "Bash(git pull *)",
+      "Bash(git add *)",
+      "Bash(git rebase *)",
+      "Bash(set *)",
+      "Bash(git reset *)",
+      "Bash(git commit *)",
+      "Bash(npx *)"
+    ]
+  },
+  "$version": 3
+}
