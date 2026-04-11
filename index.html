@@ -87,7 +87,6 @@ canvas{display:block;image-rendering:crisp-edges}
   <div style="text-align:center"><span class="level-label" id="lvl-val">LEVEL 1</span></div>
   <div style="text-align:center"><span style="color:#666;font-size:0.75em">HIGH</span><br><span class="high" id="hi-val">0</span></div>
   <div class="lives" id="lives-box"></div>
-  <div><a href="editor.html" style="color:#3b82f6;text-decoration:none;font-size:0.8em;font-weight:600">✏️ Editor</a></div>
 </div>
 
 <div id="game-wrapper"><canvas id="cv"></canvas></div>
@@ -126,6 +125,9 @@ canvas{display:block;image-rendering:crisp-edges}
       <li><strong style="color:#00ffff">Inky</strong> — flanks using Blinky</li>
       <li><strong style="color:#ffb852">Clyde</strong> — chases then retreats</li>
     </ul>
+    <div style="text-align:center;margin:18px 0 10px">
+      <a href="editor.html" style="color:#ffcc00;font-size:1.15rem;font-weight:700;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 28px;border-radius:10px;display:inline-block;transition:all 0.2s">🏗️ BUILD MY MAZE</a>
+    </div>
     <div class="modal-btns">
       <button class="btn-no" id="btn-cancel">Cancel</button>
       <button class="btn-go" id="btn-play">▶ PLAY</button>
@@ -284,10 +286,19 @@ function stopBossAmbience(){
   if(bossAmbienceInterval){clearInterval(bossAmbienceInterval);bossAmbienceInterval=null}
 }
 function sfxFruit(){
-  // Epic celebration fanfare - much more prominent
-  [523,659,784,1047,1319,1047,1319,1568].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'sine',0.16),i*90));
-  setTimeout(()=>playTone(2093,0.6,'triangle',0.18),720);
-  setTimeout(()=>playTone(1568,0.4,'sine',0.14),1200);
+  // Epic celebration fanfare — layered multi-voice
+  // Main ascending arpeggio
+  [523,659,784,1047,1319,1568,2093].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.18),i*80));
+  // Harmony layer
+  [261,329,392,523,659].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'triangle',0.1),i*80+40));
+  // Sparkle high note
+  setTimeout(()=>playTone(3136,0.5,'sine',0.12),560);
+  setTimeout(()=>playTone(2637,0.4,'sine',0.1),960);
+  // Bass hit
+  setTimeout(()=>playTone(130,0.6,'sine',0.2),0);
+  // Celebration chirps
+  setTimeout(()=>{playTone(4186,0.15,'square',0.06);playTone(5274,0.12,'square',0.05)},700);
+  setTimeout(()=>{playTone(4699,0.15,'square',0.06);playTone(5588,0.12,'square',0.05)},850);
 }
 function sfxIntermission(){
   // Classic ascending arpeggio
@@ -310,6 +321,7 @@ let ghosts,ghostPool;      // active ghosts + full pool (including extras)
 let frightT,frightFlash;   // frightened mode
 let modeIdx,modeTick,modes; // scatter/chase schedule
 let fruitObj,fruitShown,fruitPopup;
+let fruitGlowTick=0; // Pulsing glow counter for fruit collection
 let readyTick,completeTick;
 let diedTick;
 let cherrySpotIdx=0;       // current cherry position index
@@ -385,7 +397,7 @@ function startLv(){
   initEnts();
   frightT=0;frightFlash=false;
   modeIdx=0;modeTick=0;buildModes();
-  fruitObj=null;fruitShown=false;fruitPopup=null;
+  fruitObj=null;fruitShown=false;fruitPopup=null;fruitGlowTick=0;
   ghostsEatenThisRound=0;
   cherrySpotIdx=lv%CHERRY_SPOTS.length;
   readyTick=120;
@@ -767,6 +779,7 @@ function updateFruit(){
       {x:fruitObj.x-1,y:fruitObj.y,p:'✨',t:50},
       {x:fruitObj.x+1,y:fruitObj.y,p:'✨',t:50}
     ];
+    fruitGlowTick=30; // Trigger pulsing glow
     fruitObj=null;fruitShown=false;
   }
 }
@@ -988,7 +1001,7 @@ function triggerBonusRound(){
   // Rebuild maze with all dots, power pellets, fruit replenished
   buildMaze();
   placeExtraPowerPellets();
-  fruitObj=null;fruitShown=false;fruitPopup=null;
+  fruitObj=null;fruitShown=false;fruitPopup=null;fruitGlowTick=0;
   ghostsEatenThisRound=0;
   readyTick=120;state='ready';
   // Reset boss state for next round (can spawn again)
@@ -1220,6 +1233,26 @@ function drawFruit(){
 }
 
 function drawPopups(){
+  // Pulsing glow at fruit collection position
+  if(fruitGlowTick>0){
+    fruitGlowTick--;
+    const pulse=0.5+0.5*Math.sin(fruitGlowTick*0.4); // Oscillating glow
+    const fx=fruitPopup?fruitPopup.x*ts+ts/2:0;
+    const fy=fruitPopup?fruitPopup.y*ts+ts/2:0;
+    const radius=ts*1.5+pulse*ts;
+    const gradient=cx.createRadialGradient(fx,fy,0,fx,fy,radius);
+    gradient.addColorStop(0,`rgba(255,215,0,${0.35*pulse})`);
+    gradient.addColorStop(0.5,`rgba(255,165,0,${0.2*pulse})`);
+    gradient.addColorStop(1,'rgba(255,165,0,0)');
+    cx.fillStyle=gradient;
+    cx.beginPath();cx.arc(fx,fy,radius,0,Math.PI*2);cx.fill();
+    // Secondary flash
+    if(fruitGlowTick>20&&fruitGlowTick%4<2){
+      cx.fillStyle=`rgba(255,255,255,${0.15*pulse})`;
+      cx.beginPath();cx.arc(fx,fy,ts*0.8,0,Math.PI*2);cx.fill();
+    }
+  }
+
   // Main fruit popup
   if(fruitPopup){
     fruitPopup.t--;
