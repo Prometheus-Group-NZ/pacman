@@ -6,60 +6,148 @@
 <title>PacMan — Maze Editor</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟡</text></svg>">
 <style>
+/* ─── Reset & Base ─── */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0b;font-family:'Segoe UI',system-ui,sans-serif;color:#f4f4f5}
+html,body{width:100%;height:100dvh;overflow:hidden;background:#0a0a0b;font-family:'Segoe UI',system-ui,sans-serif;color:#f4f4f5}
 
-#app{display:flex;flex-direction:column;height:100%}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
 
-/* Top bar */
-#topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#18181b;border-bottom:1px solid #3f3f46;flex-shrink:0;flex-wrap:wrap}
-#topbar h1{font-size:1rem;color:#ffcc00;letter-spacing:1px;margin-right:8px}
-.tb-btn{padding:6px 14px;border:1px solid #3f3f46;background:#27272a;color:#f4f4f5;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+/* ─── Top Bar ─── */
+#topbar{display:flex;align-items:center;gap:clamp(4px,1vw,8px);padding:clamp(6px,1.5vw,8px) clamp(6px,2vw,12px);background:#18181b;border-bottom:1px solid #3f3f46;flex-shrink:0;flex-wrap:wrap;min-height:0}
+#topbar h1{font-size:clamp(0.85rem,2.5vw,1rem);color:#ffcc00;letter-spacing:1px;margin-right:clamp(4px,1vw,8px);white-space:nowrap}
+.tb-btn{padding:clamp(4px,1vw,6px) clamp(8px,2vw,14px);border:1px solid #3f3f46;background:#27272a;color:#f4f4f5;border-radius:6px;font-size:clamp(0.7rem,2vw,0.85rem);font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{background:#3f3f46;border-color:#555}
 .tb-btn.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
 .tb-btn.go{background:#22c55e;border-color:#22c55e;color:#000}
 .tb-btn.go:hover{background:#16a34a}
-.sep{width:1px;height:24px;background:#3f3f46;margin:0 4px}
-#maze-name{background:#0a0a0b;border:1px solid #3f3f46;color:#f4f4f5;padding:4px 8px;border-radius:4px;font-size:0.85rem;width:140px}
+.sep{width:1px;height:clamp(18px,4vw,24px);background:#3f3f46;margin:0 clamp(2px,0.5vw,4px);flex-shrink:0}
+#maze-name{background:#0a0a0b;border:1px solid #3f3f46;color:#f4f4f5;padding:clamp(3px,0.8vw,4px) clamp(6px,1.5vw,8px);border-radius:4px;font-size:clamp(0.7rem,2vw,0.85rem);width:clamp(80px,15vw,140px);min-width:0;flex-shrink:0}
 #maze-name:focus{outline:none;border-color:#3b82f6}
 
-/* Editor area */
-#editor-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;min-height:0}
-canvas{display:block;image-rendering:crisp-edges;cursor:crosshair}
+/* ─── Editor Area ─── */
+#editor-wrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;overflow:auto;min-height:0;position:relative}
+canvas{display:block;image-rendering:crisp-edges;cursor:crosshair;max-width:100%;max-height:100%;object-fit:contain}
 
-/* Tool palette */
-#tools{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#18181b;border-top:1px solid #3f3f46;flex-shrink:0;justify-content:center;flex-wrap:wrap}
-.tool{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:2px solid transparent;border-radius:8px;cursor:pointer;transition:all 0.15s;min-width:56px}
+/* ─── Tool Palette ─── */
+#tools{display:flex;align-items:center;gap:clamp(4px,1vw,6px);padding:clamp(6px,1.5vw,8px) clamp(6px,2vw,12px);background:#18181b;border-top:1px solid #3f3f46;flex-shrink:0;justify-content:center;flex-wrap:wrap}
+.tool{display:flex;flex-direction:column;align-items:center;gap:2px;padding:clamp(4px,1vw,6px) clamp(6px,1.5vw,10px);border:2px solid transparent;border-radius:8px;cursor:pointer;transition:all 0.15s;min-width:clamp(44px,10vw,56px);flex-shrink:0}
 .tool:hover{background:#27272a}
 .tool.active{border-color:#3b82f6;background:rgba(59,130,246,0.15)}
-.tool .ico{font-size:1.3rem;line-height:1}
-.tool .lbl{font-size:0.65rem;color:#a1a1aa}
+.tool .ico{font-size:clamp(1rem,3vw,1.3rem);line-height:1}
+.tool .lbl{font-size:clamp(0.55rem,1.5vw,0.65rem);color:#a1a1aa;white-space:nowrap}
 
-/* Status bar */
-#status{display:flex;justify-content:space-between;align-items:center;padding:4px 12px;background:#111;border-top:1px solid #222;font-size:0.75rem;color:#888;flex-shrink:0}
+/* ─── Status Bar ─── */
+#status{display:flex;justify-content:space-between;align-items:center;padding:clamp(3px,0.8vw,4px) clamp(6px,2vw,12px);background:#111;border-top:1px solid #222;font-size:clamp(0.65rem,1.8vw,0.75rem);color:#888;flex-shrink:0;gap:8px;flex-wrap:wrap}
+#status span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Saved mazes panel */
-#saved-panel{position:fixed;right:-320px;top:0;bottom:0;width:300px;background:#18181b;border-left:1px solid #3f3f46;z-index:50;transition:right 0.3s;display:flex;flex-direction:column}
+/* ─── Saved Mazes Panel ─── */
+#saved-panel{position:fixed;right:-320px;top:0;bottom:0;width:min(300px,85vw);background:#18181b;border-left:1px solid #3f3f46;z-index:50;transition:right 0.3s;display:flex;flex-direction:column;max-width:100vw}
 #saved-panel.open{right:0}
-#saved-panel h2{padding:12px;border-bottom:1px solid #3f3f46;font-size:1rem;color:#0ff}
+#saved-panel h2{padding:12px;border-bottom:1px solid #3f3f46;font-size:clamp(0.9rem,2.5vw,1rem);color:#0ff;position:relative}
 #saved-list{flex:1;overflow-y:auto;padding:8px}
 .saved-item{background:#27272a;border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;transition:all 0.15s}
 .saved-item:hover{background:#3f3f46}
-.saved-item .name{font-weight:600;font-size:0.9rem}
-.saved-item .meta{color:#888;font-size:0.75rem;margin-top:2px}
-.saved-item .actions{display:flex;gap:4px;margin-top:6px}
-.saved-item .actions button{padding:3px 8px;border:1px solid #555;background:#333;color:#fff;border-radius:4px;font-size:0.75rem;cursor:pointer}
+.saved-item .name{font-weight:600;font-size:clamp(0.8rem,2.2vw,0.9rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved-item .meta{color:#888;font-size:clamp(0.65rem,1.8vw,0.75rem);margin-top:2px}
+.saved-item .actions{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.saved-item .actions button{padding:3px 8px;border:1px solid #555;background:#333;color:#fff;border-radius:4px;font-size:clamp(0.65rem,1.8vw,0.75rem);cursor:pointer;transition:background 0.15s}
 .saved-item .actions button:hover{background:#555}
 .saved-item .actions button.del{border-color:#ef4444;color:#ef4444}
+.saved-item .actions button.del:hover{background:rgba(239,68,68,0.2)}
 
-/* Storage indicator */
-#storage-info{font-size:0.8rem}
+/* ─── Storage Indicator ─── */
+#storage-info{font-size:clamp(0.7rem,2vw,0.8rem)}
 .storage-bar{width:100%;height:6px;background:#333;border-radius:3px;overflow:hidden;margin-top:6px}
 .storage-fill{height:100%;border-radius:3px;transition:width 0.3s,background 0.3s}
-.storage-text{display:flex;justify-content:space-between;align-items:center}
-.storage-warn{color:#ef4444;font-size:0.75rem;margin-top:4px}
+.storage-text{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.storage-warn{color:#ef4444;font-size:clamp(0.65rem,1.8vw,0.75rem);margin-top:4px}
 .storage-ok{color:#22c55e}
-#close-panel{position:absolute;top:8px;right:8px;background:none;border:none;color:#a1a1aa;font-size:1.2rem;cursor:pointer}
+#close-panel{position:absolute;top:8px;right:8px;background:none;border:none;color:#a1a1aa;font-size:clamp(1rem,2.5vw,1.2rem);cursor:pointer;padding:2px 6px;border-radius:4px;transition:all 0.15s}
+#close-panel:hover{color:#fff;background:#333}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ═══════════════════════════════════════════ */
+
+/* ── Large desktops (1440px+) ── */
+@media(min-width:1440px){
+  #topbar{padding:8px 16px}
+  .tb-btn{padding:6px 16px;font-size:0.9rem}
+  #maze-name{width:160px}
+}
+
+/* ── Tablets landscape / small desktops (769px – 1024px) ── */
+@media(min-width:769px)and(max-width:1024px){
+  #topbar{gap:6px;padding:6px 10px}
+  .tb-btn{padding:5px 10px;font-size:0.8rem}
+  #maze-name{width:110px}
+  .tool{min-width:50px;padding:5px 8px}
+}
+
+/* ── Tablets portrait / phones (<=768px) ── */
+@media(max-width:768px){
+  #topbar{justify-content:center;padding:6px 8px}
+  #topbar h1{font-size:0.85rem;width:100%;text-align:center;margin-right:0;margin-bottom:4px}
+  .tb-btn{padding:5px 8px;font-size:0.75rem}
+  #maze-name{width:100%;max-width:200px}
+  .sep{display:none}
+  #tools{gap:3px;padding:6px 6px}
+  .tool{min-width:clamp(40px,12vw,52px);padding:4px 6px}
+  .tool .lbl{font-size:0.6rem}
+  #status{font-size:0.7rem}
+}
+
+/* ── Small phones (<=480px) ── */
+@media(max-width:480px){
+  #topbar{padding:4px 6px;gap:4px}
+  #topbar h1{font-size:0.8rem;padding:2px 0}
+  .tb-btn{padding:4px 6px;font-size:0.7rem;border-radius:4px}
+  #maze-name{padding:3px 6px;font-size:0.7rem;width:90px}
+  .sep{display:none}
+  #tools{gap:2px;padding:4px 4px}
+  .tool{min-width:clamp(36px,13vw,46px);padding:3px 4px;border-width:1.5px;border-radius:6px}
+  .tool .ico{font-size:clamp(0.9rem,3.5vw,1.1rem)}
+  .tool .lbl{font-size:0.55rem}
+  #status{font-size:0.65rem;padding:3px 6px}
+  .saved-item{padding:8px}
+  .saved-item .name{font-size:0.75rem}
+  .saved-item .meta{font-size:0.65rem}
+  .saved-item .actions button{padding:2px 6px;font-size:0.65rem}
+}
+
+/* ── Very narrow screens (<=360px) ── */
+@media(max-width:360px){
+  #topbar{padding:3px 4px}
+  .tb-btn{padding:3px 5px;font-size:0.65rem}
+  #maze-name{width:80px;font-size:0.65rem}
+  .tool{min-width:clamp(32px,14vw,40px);padding:2px 3px}
+  .tool .ico{font-size:0.85rem}
+  .tool .lbl{font-size:0.5rem}
+  #status{font-size:0.6rem}
+}
+
+/* ── Landscape phones (height <=500px) ── */
+@media(max-height:500px)and(orientation:landscape){
+  #topbar{padding:4px 8px;min-height:auto}
+  #topbar h1{font-size:0.8rem;margin-bottom:0;margin-right:8px;width:auto}
+  .tb-btn{padding:3px 8px;font-size:0.7rem}
+  #maze-name{width:100px;padding:2px 6px}
+  #tools{padding:3px 6px;gap:3px}
+  .tool{min-width:36px;padding:2px 4px;flex-direction:row;gap:4px}
+  .tool .lbl{display:none}
+  #status{padding:2px 8px;font-size:0.65rem}
+}
+
+/* ── Ultra-wide screens (>=1920px) ── */
+@media(min-width:1920px){
+  #topbar{padding:10px 24px;gap:12px}
+  .tb-btn{padding:8px 18px;font-size:0.95rem}
+  #maze-name{width:180px;font-size:0.9rem}
+  .tool{min-width:64px;padding:8px 12px}
+  .tool .ico{font-size:1.4rem}
+  .tool .lbl{font-size:0.7rem}
+  #status{font-size:0.8rem;padding:6px 16px}
+}
 </style>
 <!-- Cloudflare Web Analytics -->
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b21f18b8bcac42c5a7c54d85bc444055"}'></script>
@@ -190,10 +278,20 @@ const TEMPLATE=[
 "0000000000000000000000000000"
 ];
 
+function calcTileSize(){
+  const topbar=document.getElementById('topbar');
+  const tools=document.getElementById('tools');
+  const status=document.getElementById('status');
+  const chromeH=(topbar?topbar.offsetHeight:40)+(tools?tools.offsetHeight:60)+(status?status.offsetHeight:24)+16;
+  const maxW=window.innerWidth-16;
+  const maxH=window.innerHeight-chromeH;
+  return Math.max(8,Math.min(22,Math.floor(Math.min(maxW/C,maxH/R))));
+}
+
 function init(){
   cv=document.getElementById('cv');
   cx=cv.getContext('2d');
-  ts=Math.max(10,Math.min(18,Math.floor((window.innerHeight-160)/R)));
+  ts=calcTileSize();
   cv.width=C*ts;cv.height=R*ts;
   loadTemplate();
 
@@ -247,7 +345,7 @@ function init(){
 
   // Resize
   window.addEventListener('resize',()=>{
-    ts=Math.max(10,Math.min(18,Math.floor((window.innerHeight-160)/R)));
+    ts=calcTileSize();
     cv.width=C*ts;cv.height=R*ts;
     render();
   });
