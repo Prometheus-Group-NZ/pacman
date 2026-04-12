@@ -105,17 +105,22 @@ canvas{display:block;image-rendering:crisp-edges;max-width:100%;max-height:100%;
 /* ─── Controls Modal ─── */
 #controls-modal{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;z-index:300;padding:clamp(10px,3vw,16px)}
 #controls-modal.visible{display:flex}
-.modal-box{background:#111;border:2px solid #2a2a2a;border-radius:16px;padding:clamp(16px,4vw,24px);max-width:460px;width:100%;max-height:90dvh;overflow-y:auto;box-shadow:0 0 60px rgba(255,204,0,0.1)}
-.modal-box h2{color:#ffcc00;font-size:clamp(1.2rem,4vw,1.6rem);margin-bottom:12px;text-align:center;letter-spacing:3px}
-.modal-box h3{color:#0ff;font-size:clamp(0.85rem,2.5vw,0.95rem);margin:14px 0 6px;letter-spacing:1px}
-.modal-box p,.modal-box li{color:#bbb;font-size:clamp(0.8rem,2.2vw,0.88rem);line-height:1.5}
-.modal-box ul{padding-left:18px;margin:4px 0}
-.modal-box li{margin-bottom:3px}
-.ctl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0}
-.ctl-item{background:#1a1a1a;border-radius:8px;padding:8px;text-align:center}
-.ctl-item .ico{font-size:1.5rem;margin-bottom:2px}
-.ctl-item .lbl{color:#888;font-size:clamp(0.7rem,2vw,0.78rem)}
-.modal-btns{display:flex;gap:10px;margin-top:18px}
+.modal-box{background:#111;border:2px solid #2a2a2a;border-radius:16px;padding:clamp(16px,4vw,24px);max-width:460px;width:100%;max-height:90dvh;overflow-y:auto;box-shadow:0 0 60px rgba(255,204,0,0.1);scrollbar-width:thin;scrollbar-color:#333 transparent}
+.modal-box::-webkit-scrollbar{width:4px}
+.modal-box::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.modal-box h2{color:#ffcc00;font-size:clamp(1.2rem,4vw,1.6rem);margin-bottom:8px;text-align:center;letter-spacing:3px}
+.modal-box h3{color:#0ff;font-size:clamp(0.8rem,2.5vw,0.95rem);margin:10px 0 4px;letter-spacing:1px}
+.modal-box p,.modal-box li{color:#bbb;font-size:clamp(0.78rem,2.2vw,0.88rem);line-height:1.45}
+.modal-box ul{padding-left:18px;margin:2px 0}
+.modal-box li{margin-bottom:2px}
+.ctl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:8px 0}
+.ctl-item{background:#1a1a1a;border-radius:8px;padding:6px;text-align:center}
+.ctl-item .ico{font-size:clamp(1.1rem,3vw,1.5rem);margin-bottom:1px}
+.ctl-item .lbl{color:#888;font-size:clamp(0.65rem,1.8vw,0.78rem)}
+.modal-link-wrap{text-align:center;margin:12px 0 8px}
+.modal-link{color:#ffcc00;font-size:clamp(0.85rem,2.5vw,1.15rem);font-weight:700;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:clamp(6px,1.5vw,10px) clamp(16px,4vw,28px);border-radius:10px;display:inline-block;transition:all 0.2s}
+.modal-link:hover{background:rgba(255,204,0,0.1)}
+.modal-btns{display:flex;gap:10px;margin-top:14px}
 .modal-btns button{flex:1;padding:clamp(10px,2.5vw,12px) clamp(12px,3vw,16px);border:none;border-radius:8px;font-size:clamp(0.85rem,2.5vw,0.95rem);font-weight:600;cursor:pointer}
 .btn-go{background:#ffcc00;color:#000}.btn-go:hover{background:#ffe033}
 .btn-no{background:#333;color:#ccc}.btn-no:hover{background:#444}
@@ -177,8 +182,21 @@ canvas{display:block;image-rendering:crisp-edges;max-width:100%;max-height:100%;
   #touch-controls{height:clamp(110px,22dvh,170px)}
   .d-pad{grid-template-columns:repeat(3,clamp(40px,12vw,56px));grid-template-rows:repeat(3,clamp(40px,12vw,56px));gap:2px}
   .d-btn{font-size:clamp(12px,3.5vw,18px);border-radius:10px}
-  .modal-box{padding:14px}
-  .ctl-grid{grid-template-columns:1fr 1fr}
+  /* Modal compact on mobile */
+  .modal-box{padding:14px 12px;max-height:95dvh}
+  .modal-box h2{font-size:1.15rem;margin-bottom:6px}
+  .modal-box h3{font-size:0.78rem;margin:8px 0 3px}
+  .modal-box p,.modal-box li{font-size:0.75rem;line-height:1.4}
+  .modal-box ul{margin:1px 0}
+  .ctl-grid{grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}
+  .ctl-item{padding:5px 4px}
+  .ctl-item .ico{font-size:1.1rem}
+  .ctl-item .lbl{font-size:0.62rem}
+  .modal-link-wrap{margin:8px 0 6px}
+  .modal-link{font-size:0.85rem;padding:6px 16px}
+  .modal-btns{gap:6px;margin-top:10px}
+  .modal-btns button{padding:10px 12px;font-size:0.85rem}
+  .btn-never{padding:8px;font-size:0.72rem;margin-top:8px}
 }
 
 /* ── Small phones (<=380px) ── */
@@ -190,10 +208,20 @@ canvas{display:block;image-rendering:crisp-edges;max-width:100%;max-height:100%;
   #touch-controls{height:clamp(90px,20dvh,140px)}
   .d-pad{grid-template-columns:repeat(3,clamp(36px,11vw,48px));grid-template-rows:repeat(3,clamp(36px,11vw,48px));gap:2px}
   .d-btn{font-size:11px;border-radius:8px;border-width:1.5px}
-  .modal-box{padding:10px}
-  .modal-box h2{font-size:1.1rem}
-  .modal-box h3{font-size:0.8rem}
-  .modal-box p,.modal-box li{font-size:0.75rem}
+  /* Ultra-compact modal on tiny screens */
+  .modal-box{padding:10px 8px;max-height:96dvh}
+  .modal-box h2{font-size:1.05rem;margin-bottom:4px}
+  .modal-box h3{font-size:0.72rem;margin:6px 0 2px}
+  .modal-box p,.modal-box li{font-size:0.7rem;line-height:1.35}
+  .ctl-grid{gap:3px;margin:4px 0}
+  .ctl-item{padding:4px 3px}
+  .ctl-item .ico{font-size:1rem}
+  .ctl-item .lbl{font-size:0.58rem}
+  .modal-link-wrap{margin:6px 0 4px}
+  .modal-link{font-size:0.78rem;padding:5px 12px}
+  .modal-btns{gap:5px;margin-top:8px}
+  .modal-btns button{padding:9px 8px;font-size:0.8rem}
+  .btn-never{padding:6px;font-size:0.68rem;margin-top:6px}
 }
 
 /* ── Very narrow screens (foldable, <=320px) ── */
@@ -306,8 +334,8 @@ canvas{display:block;image-rendering:crisp-edges;max-width:100%;max-height:100%;
       <li><strong style="color:#00ffff">Inky</strong> — flanks using Blinky</li>
       <li><strong style="color:#ffb852">Clyde</strong> — chases then retreats</li>
     </ul>
-    <div style="text-align:center;margin:18px 0 10px">
-      <a href="editor.html" style="color:#ffcc00;font-size:1.15rem;font-weight:700;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 28px;border-radius:10px;display:inline-block;transition:all 0.2s">🏗️ BUILD MY MAZE</a>
+    <div class="modal-link-wrap">
+      <a href="editor.html" class="modal-link">🏗️ BUILD MY MAZE</a>
     </div>
     <div class="modal-btns">
       <button class="btn-no" id="btn-cancel">Cancel</button>
